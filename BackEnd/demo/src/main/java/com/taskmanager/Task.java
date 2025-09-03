@@ -1,4 +1,4 @@
-package taskmanager;
+package com.taskmanager;
 
 import jakarta.persistence.*;
 import java.time.LocalDate;
