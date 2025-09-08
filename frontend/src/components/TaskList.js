@@ -1,16 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { taskService } from '../services/api';
 
-
-const TaskList = ({ refreshFlag }) => {  // ← Mude o prop name para refreshFlag
+const TaskList = ({ refreshFlag }) => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState('ALL');
 
-  useEffect(() => {
-    loadTasks();
-  }, [refreshFlag]); 
-
-const loadTasks = async () => {
+  const loadTasks = async () => {
     try {
       const response = await taskService.getAllTasks();
       setTasks(response.data);
@@ -22,26 +18,96 @@ const loadTasks = async () => {
     }
   };
 
+  const deleteTask = async (id) => {
+    if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
+      try {
+        await taskService.deleteTask(id);
+        loadTasks();
+        alert('Tarefa excluída com sucesso!');
+      } catch (error) {
+        console.error('Erro ao excluir tarefa:', error);
+        alert('Erro ao excluir tarefa. Verifique o console.');
+      }
+    }
+  };
 
-  if (loading) return <div>Carregando tarefas...</div>;
+  const updateTaskStatus = async (id, newStatus) => {
+    try {
+      const taskToUpdate = tasks.find(task => task.id === id);
+      const updatedTask = {
+        ...taskToUpdate,
+        status: newStatus
+      };
+      
+      await taskService.updateTask(id, updatedTask);
+      loadTasks();
+    } catch (error) {
+      console.error('Erro ao atualizar tarefa:', error);
+      alert('Erro ao atualizar tarefa. Verifique o console.');
+    }
+  };
+
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString('pt-BR');
+  };
+
+  const filteredTasks = filter === 'ALL' 
+    ? tasks 
+    : tasks.filter(task => task.status === filter);
+
+  useEffect(() => {
+    loadTasks();
+  }, [refreshFlag]);
+
+if (loading) return (
+  <div className="loading-container">
+    <div className="spinner"></div>
+    <p>Carregando tarefas...</p>
+  </div>
+);
 
   return (
     <div className="task-list">
-      <h2>📋 Minhas Tarefas ({tasks.length})</h2>
+      <h2>📋 Minhas Tarefas ({filteredTasks.length})</h2>
       
-      {tasks.length === 0 ? (
+      {/* Filtro por status */}
+      <div className="filter-section">
+        <label>Filtrar por status: </label>
+        <select 
+          value={filter} 
+          onChange={(e) => setFilter(e.target.value)}
+          className="filter-select"
+        >
+          <option value="ALL">Todos</option>
+          <option value="TODO">A Fazer</option>
+          <option value="DOING">Fazendo</option>
+          <option value="DONE">Concluído</option>
+        </select>
+      </div>
+
+      {filteredTasks.length === 0 ? (
         <p>Nenhuma tarefa encontrada. Crie sua primeira tarefa!</p>
       ) : (
-        tasks.map(task => (
+        filteredTasks.map(task => (
           <div key={task.id} className={`task-item ${task.status.toLowerCase()}`}>
             <h3>{task.title}</h3>
             <p>Status: {task.status}</p>
             <p>Descrição: {task.description}</p>
-            <p>Prazo: {task.dueDate}</p>
+            <p>Prazo: {formatDate(task.dueDate)}</p>
             <div className="task-actions">
-              <button>✅ Concluir</button>
-              <button>✏️ Editar</button>
-              <button>🗑️ Excluir</button>
+              <select 
+                value={task.status} 
+                onChange={(e) => updateTaskStatus(task.id, e.target.value)}
+                className="status-select"
+              >
+                <option value="TODO">A Fazer</option>
+                <option value="DOING">Fazendo</option>
+                <option value="DONE">Concluído</option>
+              </select>
+              
+              <button onClick={() => deleteTask(task.id)}>
+                🗑️ Excluir
+              </button>
             </div>
           </div>
         ))
@@ -49,33 +115,5 @@ const loadTasks = async () => {
     </div>
   );
 };
-const deleteTask = async (id) => {
-  if (window.confirm('Tem certeza que deseja excluir esta tarefa?')) {
-    try {
-      await taskService.deleteTask(id);
-      loadTasks(); // Recarrega a lista
-      alert('Tarefa excluída com sucesso!');
-    } catch (error) {
-      console.error('Erro ao excluir tarefa:', error);
-    }
-  }
-};
-<button onClick={() => deleteTask(task.id)}>🗑️ Excluir</button>
-
-// Adicione para marcar como concluída:
-const updateTaskStatus = async (id, newStatus) => {
-  try {
-    const taskToUpdate = tasks.find(task => task.id === id);
-    await taskService.updateTask(id, { ...taskToUpdate, status: newStatus });
-    loadTasks();
-  } catch (error) {
-    console.error('Erro ao atualizar tarefa:', error);
-  }
-};
-
-// Botão para concluir:
-<button onClick={() => updateTaskStatus(task.id, 'DONE')}>
-  ✅ Concluir
-</button>
 
 export default TaskList;

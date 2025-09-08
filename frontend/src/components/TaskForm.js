@@ -8,21 +8,60 @@ const TaskForm = ({ onTaskAdded }) => {
     status: 'TODO',
     dueDate: ''
   });
+  const [errors, setErrors] = useState({});
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const validateForm = () => {
+    const newErrors = {};
+    
+    if (!formData.title.trim()) {
+      newErrors.title = 'Título é obrigatório';
+    } else if (formData.title.length < 3) {
+      newErrors.title = 'Título deve ter pelo menos 3 caracteres';
+    }
+    
+    if (!formData.dueDate) {
+      newErrors.dueDate = 'Data de vencimento é obrigatória';
+    } else {
+      const selectedDate = new Date(formData.dueDate);
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      
+      if (selectedDate < today) {
+        newErrors.dueDate = 'Data não pode ser no passado';
+      }
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value
+      [name]: value
     });
+    
+    // Limpa erro do campo quando usuário começa a digitar
+    if (errors[name]) {
+      setErrors({
+        ...errors,
+        [name]: ''
+      });
+    }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    if (!validateForm()) return;
+    
+    setIsSubmitting(true);
+    
     try {
       await taskService.createTask(formData);
       
-      // Limpa o formulário
       setFormData({
         title: '',
         description: '',
@@ -30,7 +69,8 @@ const TaskForm = ({ onTaskAdded }) => {
         dueDate: ''
       });
       
-      // Atualiza a lista de tarefas
+      setErrors({});
+      
       if (onTaskAdded) {
         onTaskAdded();
       }
@@ -39,7 +79,9 @@ const TaskForm = ({ onTaskAdded }) => {
       
     } catch (error) {
       console.error('Erro ao criar tarefa:', error);
-      alert('Erro ao criar tarefa. Verifique o console para mais detalhes.');
+      alert('Erro ao criar tarefa. Verifique o console.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -49,15 +91,16 @@ const TaskForm = ({ onTaskAdded }) => {
       
       <form onSubmit={handleSubmit}>
         <div className="form-group">
-          <label>Título:</label>
+          <label>Título: *</label>
           <input
             type="text"
             name="title"
             value={formData.title}
             onChange={handleChange}
-            required
             placeholder="Digite o título da tarefa"
+            className={errors.title ? 'error' : ''}
           />
+          {errors.title && <span className="error-text">{errors.title}</span>}
         </div>
         
         <div className="form-group">
@@ -81,18 +124,23 @@ const TaskForm = ({ onTaskAdded }) => {
         </div>
         
         <div className="form-group">
-          <label>Data de Vencimento:</label>
+          <label>Data de Vencimento: *</label>
           <input
             type="date"
             name="dueDate"
             value={formData.dueDate}
             onChange={handleChange}
-            required
+            className={errors.dueDate ? 'error' : ''}
           />
+          {errors.dueDate && <span className="error-text">{errors.dueDate}</span>}
         </div>
         
-        <button type="submit" className="btn-primary">
-          ➕ Adicionar Tarefa
+        <button 
+          type="submit" 
+          className="btn-primary"
+          disabled={isSubmitting}
+        >
+          {isSubmitting ? '⏳ Adicionando...' : '➕ Adicionar Tarefa'}
         </button>
       </form>
     </div>
