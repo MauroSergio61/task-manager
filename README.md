@@ -3,8 +3,6 @@
 
 Sistema completo de gerenciamento de tarefas com Java Spring Boot backend e React frontend
 
-https://img.shields.io/badge/%F0%9F%8E%A5-Assistir_Demo-FF0000?style=for-the-badge
-
 
 https://github.com/user-attachments/assets/760d2925-e2f4-476d-be93-cbb83a77d250
 
