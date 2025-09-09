@@ -1,9 +1,5 @@
 🚀 Task Manager - Sistema Fullstack
 <div align="center">
-https://img.shields.io/badge/Java-17%252B-007396?style=for-the-badge&logo=java
-https://img.shields.io/badge/Spring%2520Boot-3.2-6DB33F?style=for-the-badge&logo=springboot
-https://img.shields.io/badge/React-18.2-61DAFB?style=for-the-badge&logo=react
-https://img.shields.io/badge/H2-Database-007396?style=for-the-badge
 
 Sistema completo de gerenciamento de tarefas com Java Spring Boot backend e React frontend
 
